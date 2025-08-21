@@ -1,6 +1,6 @@
 # AI Prompt Rater
 
-A web app to rate your prompt and suggest a well-structured version using AI (OpenAI GPT-4).
+A web app to rate your prompt and suggest a well-structured version using AI .
 
 ---
 
