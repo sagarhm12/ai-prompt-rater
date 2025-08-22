@@ -9,9 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
-const MODEL = "deepseek-chat"; // or use "deepseek-coder" or other DeepSeek models if needed
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = "gemini-2.5-flash-lite";
+const GEMINI_API_URL =
+  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 app.post("/api/rate", async (req, res) => {
   const { prompt } = req.body;
@@ -22,35 +23,37 @@ app.post("/api/rate", async (req, res) => {
     return;
   }
 
-  // System prompt for the assistant
-  const systemPrompt = `You are a prompt expert. Given a user's prompt, rate it from 1 to 10, explain the reasoning, and rewrite it to be more clear, specific, and effective. Respond in JSON with keys: score, feedback, improved.`;
+  const systemPrompt =
+    "You are a prompt expert. Given a user's prompt, rate it from 1 to 10, explain the reasoning, and rewrite it to be more clear, specific, and effective. Respond in JSON with keys: score, feedback, improved.";
 
   try {
-    const response = await fetch(DEEPSEEK_API_URL, {
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7
+        contents: [
+          { role: "user", parts: [{ text: systemPrompt }] },
+          { role: "user", parts: [{ text: `Prompt: "${prompt}"` }] }
+        ]
       })
     });
 
     const data = await response.json();
-    console.log("Raw DeepSeek API response:", data);
+    console.log("Raw AI API response:", data);
 
-    const text = data.choices?.[0]?.message?.content || "";
+    // --- Gemini response parsing with code block removal ---
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    // Remove code block marks if present
+    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    console.log("Cleaned AI response text:", text);
+
     let parsed = { score: "", feedback: "", improved: "" };
     try {
       parsed = JSON.parse(text);
     } catch (e) {
-      console.log("Failed to parse DeepSeek response as JSON:", text);
+      console.log("Failed to parse AI response as JSON:", text);
     }
     res.json(parsed);
   } catch (e) {
