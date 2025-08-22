@@ -50,6 +50,9 @@ Frontend will run on [http://localhost:3000](http://localhost:3000)
 - **Backend:** Render, Heroku, etc.
 
 ---
+Output :
+
+<img width="1566" height="922" alt="image" src="https://github.com/user-attachments/assets/92d639e2-eca5-495c-9956-f7660a4a806a" />
 
 ## License
 
